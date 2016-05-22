@@ -263,11 +263,6 @@ class Plugin implements PluginInterface, EventSubscriberInterface
                     $gitScriptPath
                 ));
             }
-            sprintf(
-                _('Symlinking %1$s to %2$s'),
-                $hookPath,
-                $gitScriptPath
-            );
             echo "getcwd = " . getcwd();
             $filesystem->relativeSymlink($gitScriptPath, $hookPath);
         }
