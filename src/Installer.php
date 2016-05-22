@@ -89,6 +89,7 @@ class Installer extends LibraryInstaller
      */
     public function install(InstalledRepositoryInterface $repo, PackageInterface $package)
     {
+        echo 'Install package ' . $package->getPrettyName();
         /*
         $path = $this->getInstallPath($package);
         if ($this->io->isVerbose()) {
