@@ -175,7 +175,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
      */
     protected function initPaths(Composer $composer)
     {
-        $composer->getPackage()->getExtra();
+        $extra = $composer->getPackage()->getExtra();
         if(!empty($extra['git-repository-root-path'])) {
             return new Paths($extra['git-repository-root-path']);
         } else {
