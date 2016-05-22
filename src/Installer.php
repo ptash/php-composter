@@ -56,7 +56,7 @@ class Installer extends LibraryInstaller
                                 Filesystem $filesystem = null, BinaryInstaller $binaryInstaller = null,
                                 Paths $paths = null)
     {
-        $this->paths = $paths ? : new Paths();
+        $this->paths = $paths ? $paths : new Paths();
         parent::__construct($io, $composer, $type, $filesystem, $binaryInstaller);
     }
 
