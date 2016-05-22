@@ -156,7 +156,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
 
         static::$paths = $this->initPaths($composer);
 
-        $installer = new Installer(static::$io, $composer);
+        $installer = new Installer(static::$io, $composer, 'library', null, null, static::$paths);
         $composer->getInstallationManager()->addInstaller($installer);
 
         $filesystem = new Filesystem();

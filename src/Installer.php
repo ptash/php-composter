@@ -14,6 +14,10 @@ namespace PHPComposter\PHPComposter;
 use Composer\Installer\LibraryInstaller;
 use Composer\Package\PackageInterface;
 use Composer\Repository\InstalledRepositoryInterface;
+use Composer\IO\IOInterface;
+use Composer\Composer;
+use Composer\Util\Filesystem;
+use Composer\Installer\BinaryInstaller;
 use InvalidArgumentException;
 
 /**
@@ -33,6 +37,29 @@ class Installer extends LibraryInstaller
     const PREFIX    = 'php-composter-';
     const TYPE      = 'php-composter-action';
 
+    /** @var Paths Reference to the Paths instance */
+    protected $paths;
+
+    /**
+     * Installer constructor.
+     *
+     * @see LibraryInstaller::__construct
+     * @param IOInterface $io
+     * @param Composer $composer
+     * @param string $type
+     * @param Filesystem|null $filesystem
+     * @param BinaryInstaller|null $binaryInstaller
+     *
+     * @param Paths|null $paths Reference to the Paths instance
+     */
+    public function __construct(IOInterface $io, Composer $composer, $type = 'library',
+                                Filesystem $filesystem = null, BinaryInstaller $binaryInstaller = null,
+                                Paths $paths = null)
+    {
+        $this->paths = $paths ? : new Paths();
+        parent::__construct($io, $composer, $type, $filesystem, $binaryInstaller);
+    }
+
     /**
      * Get the installation path of the package.
      *
@@ -45,7 +72,7 @@ class Installer extends LibraryInstaller
      */
     public function getInstallPath(PackageInterface $package)
     {
-        return Paths::getPath('actions') . $this->getSuffix($package);
+        return $this->paths->getPath('actions') . $this->getSuffix($package);
     }
 
     /**
