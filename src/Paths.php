@@ -59,6 +59,8 @@ class Paths
     {
         if (empty($pathRoot)) {
             $pathRoot = getcwd();
+        } else {
+            $pathRoot = getcwd() . DIRECTORY_SEPARATOR . $pathRoot;
         }
         $this->pathRoot = $pathRoot;
     }
