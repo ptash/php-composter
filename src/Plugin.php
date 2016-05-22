@@ -252,6 +252,8 @@ class Plugin implements PluginInterface, EventSubscriberInterface
         $hooksPath     = static::$paths->getPath('root_hooks');
         $gitScriptPath = static::$paths->getPath('git_script');
 
+        $filesystem->ensureDirectoryExists($hooksPath);
+
         foreach ($this->getGitHookNames() as $githook) {
             $hookPath = $hooksPath . $githook;
             if (static::$io->isDebug()) {
