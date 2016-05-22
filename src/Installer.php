@@ -70,10 +70,12 @@ class Installer extends LibraryInstaller
      * @return string Relative installation path.
      * @throws InvalidArgumentException If the package name does not match the required pattern.
      */
+    /*
     public function getInstallPath(PackageInterface $package)
     {
         return $this->paths->getPath('actions') . $this->getSuffix($package);
     }
+    */
 
     /**
      * Install the package.
@@ -87,6 +89,7 @@ class Installer extends LibraryInstaller
      */
     public function install(InstalledRepositoryInterface $repo, PackageInterface $package)
     {
+        /*
         $path = $this->getInstallPath($package);
         if ($this->io->isVerbose()) {
             $this->io->write(sprintf(
@@ -94,6 +97,7 @@ class Installer extends LibraryInstaller
                 $path
             ), true);
         }
+        */
 
         parent::install($repo, $package);
 
@@ -160,6 +164,7 @@ class Installer extends LibraryInstaller
      * @return string Suffix of the package name.
      * @throws InvalidArgumentException If the package name does not match the required pattern.
      */
+    /*
     protected function getSuffix(PackageInterface $package)
     {
         $result = (array)explode('/', $package->getPrettyName());
@@ -186,6 +191,7 @@ class Installer extends LibraryInstaller
 
         return mb_substr($name, $prefixLength);
     }
+    */
 
     /**
      * Get the hooks configuration from package extra data.
