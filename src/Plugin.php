@@ -263,7 +263,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
                     $gitScriptPath
                 ));
             }
-            printf(
+            sprintf(
                 _('Symlinking %1$s to %2$s'),
                 $hookPath,
                 $gitScriptPath
