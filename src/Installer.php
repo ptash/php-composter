@@ -101,6 +101,17 @@ class Installer extends LibraryInstaller
         */
 
         parent::install($repo, $package);
+        $this->configurePackageHooks($package);
+    }
+
+    /**
+     * Configure package hooks
+     *
+     * @param PackageInterface $package
+     */
+    public function configurePackageHooks(PackageInterface $package)
+    {
+        echo 'Install package ' . $package->getPrettyName();
 
         foreach ($this->getHooks($package) as $prioritizedHook => $method) {
             $array = explode('.', $prioritizedHook);

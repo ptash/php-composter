@@ -51,6 +51,24 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     protected static $paths;
 
     /**
+     * Instance of the Composer class
+     *
+     * @var Composer
+     *
+     * * @since 0.3.0
+     */
+    protected static $composer;
+
+    /**
+     * Instance of the Installer class
+     *
+     * @var Installer
+     *
+     * * @since 0.3.0
+     */
+    protected static $installer;
+
+    /**
      * Get the event subscriber configuration for this plugin.
      *
      * @return array<string,string> The events to listen to, and their associated handlers.
@@ -72,6 +90,8 @@ class Plugin implements PluginInterface, EventSubscriberInterface
      */
     public static function persistConfig(Event $event)
     {
+        static::$installer->configurePackageHooks(static::$composer->getPackage());
+        
         $filesystem = new Filesystem();
         $path       = static::$paths->getPath('git_composter');
         $filesystem->ensureDirectoryExists($path);
@@ -149,6 +169,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
      */
     public function activate(Composer $composer, IOInterface $io)
     {
+        static::$composer = $composer;
         static::$io = $io;
         if (static::$io->isVerbose()) {
             static::$io->write(_('Activating PHP Composter plugin'), true);
@@ -156,8 +177,8 @@ class Plugin implements PluginInterface, EventSubscriberInterface
 
         static::$paths = $this->initPaths($composer);
 
-        $installer = new Installer(static::$io, $composer, 'library', null, null, static::$paths);
-        $composer->getInstallationManager()->addInstaller($installer);
+        static::$installer = new Installer(static::$io, $composer, 'library', null, null, static::$paths);
+        $composer->getInstallationManager()->addInstaller(static::$installer);
 
         $filesystem = new Filesystem();
         $this->cleanUp($filesystem);
