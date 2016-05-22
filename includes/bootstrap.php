@@ -22,7 +22,8 @@ if (file_exists($root . '/vendor/autoload.php')) {
 }
 
 // Read the configuration file.
-$config = include Paths::getPath('git_config');
+$path = new Paths();
+$config = include $path->getPath('git_config');
 
 // Iterate over hook methods.
 if (array_key_exists($hook, $config)) {

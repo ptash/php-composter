@@ -42,6 +42,15 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     protected static $io;
 
     /**
+     * Instance of the Paths class
+     *
+     * @var Paths
+     *
+     * * @since 0.3.0
+     */
+    protected static $paths;
+
+    /**
      * Get the event subscriber configuration for this plugin.
      *
      * @return array<string,string> The events to listen to, and their associated handlers.
@@ -64,9 +73,9 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     public static function persistConfig(Event $event)
     {
         $filesystem = new Filesystem();
-        $path       = Paths::getPath('git_composter');
+        $path       = static::$paths->getPath('git_composter');
         $filesystem->ensureDirectoryExists($path);
-        file_put_contents(Paths::getPath('git_config'), static::getConfig());
+        file_put_contents(static::$paths->getPath('git_config'), static::getConfig());
     }
 
     /**
@@ -144,6 +153,9 @@ class Plugin implements PluginInterface, EventSubscriberInterface
         if (static::$io->isVerbose()) {
             static::$io->write(_('Activating PHP Composter plugin'), true);
         }
+
+        static::$paths = $this->initPaths($composer);
+
         $installer = new Installer(static::$io, $composer);
         $composer->getInstallationManager()->addInstaller($installer);
 
@@ -151,6 +163,24 @@ class Plugin implements PluginInterface, EventSubscriberInterface
         $this->cleanUp($filesystem);
         $this->linkBootstrapFiles($filesystem);
         $this->createGitHooks($filesystem);
+    }
+
+    /**
+     * Initialization Paths for git hooks.
+     * Use the parameter extra.git-repository-root-path to specify the root package path.
+     * The default is the directory where the file composer.json.
+     *
+     * @param Composer $composer Reference to the Composer instance.
+     * @return Paths Reference to the Paths instance
+     */
+    protected function initPaths(Composer $composer)
+    {
+        $composer->getPackage()->getExtra();
+        if(!empty($extra['git-repository-root-path'])) {
+            return new Paths($extra['git-repository-root-path']);
+        } else {
+            return new Paths(getcwd());
+        }
     }
 
     /**
@@ -162,7 +192,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
      */
     protected function cleanUp(Filesystem $filesystem)
     {
-        $composterPath = Paths::getPath('git_composter');
+        $composterPath = static::$paths->getPath('git_composter');
         if (static::$io->isVeryVerbose()) {
             static::$io->write(sprintf(
                 _('Removing previous PHP Composter actions at %1$s'),
@@ -171,7 +201,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
         }
         $filesystem->emptyDirectory($composterPath, true);
 
-        $composterTemplate = Paths::getPath('root_template');
+        $composterTemplate = static::$paths->getPath('root_template');
         if (static::$io->isVeryVerbose()) {
             static::$io->write(sprintf(
                 _('Removing previous PHP Composter code at %1$s'),
@@ -190,8 +220,8 @@ class Plugin implements PluginInterface, EventSubscriberInterface
      */
     protected function linkBootstrapFiles(Filesystem $filesystem)
     {
-        $rootTemplate      = Paths::getPath('root_template');
-        $composterTemplate = Paths::getPath('git_template');
+        $rootTemplate      = static::$paths->getPath('root_template');
+        $composterTemplate = static::$paths->getPath('git_template');
 
         $files = array(
             'bootstrap.php',
@@ -219,8 +249,8 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     protected function createGitHooks(Filesystem $filesystem)
     {
 
-        $hooksPath     = Paths::getPath('root_hooks');
-        $gitScriptPath = Paths::getPath('git_script');
+        $hooksPath     = static::$paths->getPath('root_hooks');
+        $gitScriptPath = static::$paths->getPath('git_script');
 
         foreach ($this->getGitHookNames() as $githook) {
             $hookPath = $hooksPath . $githook;

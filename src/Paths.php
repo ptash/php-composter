@@ -33,6 +33,14 @@ class Paths
     const GIT_FOLDER          = '.git/';
     const GIT_TEMPLATE_FOLDER = 'includes/';
     const HOOKS_FOLDER        = 'hooks/';
+
+    /**
+     * @var string path to root of package
+     *
+     * * @since 0.3.0
+     */
+    protected $pathRoot = '';
+
     /**
      * Internal storage of all required paths.
      *
@@ -40,7 +48,20 @@ class Paths
      *
      * @since 0.1.0
      */
-    protected static $paths = array();
+    protected $paths = array();
+
+    /**
+     * Paths constructor.
+     *
+     * @param string $pathRoot path to root of package
+     */
+    public function __construct($pathRoot = '')
+    {
+        if (empty($pathRoot)) {
+            $pathRoot = getcwd();
+        }
+        $this->pathRoot = $pathRoot;
+    }
 
     /**
      * Get a specific path by key.
@@ -51,14 +72,14 @@ class Paths
      *
      * @return string Path associated with the key. Empty string if not found.
      */
-    public static function getPath($key)
+    public function getPath($key)
     {
-        if (empty(static::$paths)) {
-            static::initPaths();
+        if (empty($this->paths)) {
+            $this->initPaths();
         }
 
-        if (array_key_exists($key, static::$paths)) {
-            return static::$paths[$key];
+        if (array_key_exists($key, $this->paths)) {
+            return $this->paths[$key];
         }
 
         return '';
@@ -69,18 +90,18 @@ class Paths
      *
      * @since 0.1.0
      */
-    protected static function initPaths()
+    protected function initPaths()
     {
-        static::$paths['pwd']              = getcwd() . DIRECTORY_SEPARATOR;
-        static::$paths['root_git']         = static::$paths['pwd'] . self::GIT_FOLDER;
-        static::$paths['root_hooks']       = static::$paths['root_git'] . self::HOOKS_FOLDER;
-        static::$paths['vendor_composter'] = static::$paths['pwd'] . self::COMPOSTER_PATH;
-        static::$paths['git_composter']    = static::$paths['root_git'] . self::COMPOSTER_FOLDER;
-        static::$paths['git_script']       = static::$paths['vendor_composter'] . self::BIN_FOLDER . self::EXECUTABLE;
-        static::$paths['actions']          = static::$paths['git_composter'] . self::ACTIONS_FOLDER;
-        static::$paths['git_template']     = static::$paths['vendor_composter'] . self::GIT_TEMPLATE_FOLDER;
-        static::$paths['root_template']    = static::$paths['git_composter'] . self::GIT_TEMPLATE_FOLDER;
-        static::$paths['git_config']       = static::$paths['git_composter'] . self::CONFIG;
+        $this->paths['pwd']              = $this->pathRoot . DIRECTORY_SEPARATOR;
+        $this->paths['root_git']         = $this->paths['pwd'] . self::GIT_FOLDER;
+        $this->paths['root_hooks']       = $this->paths['root_git'] . self::HOOKS_FOLDER;
+        $this->paths['vendor_composter'] = $this->paths['pwd'] . self::COMPOSTER_PATH;
+        $this->paths['git_composter']    = $this->paths['root_git'] . self::COMPOSTER_FOLDER;
+        $this->paths['git_script']       = $this->paths['vendor_composter'] . self::BIN_FOLDER . self::EXECUTABLE;
+        $this->paths['actions']          = $this->paths['git_composter'] . self::ACTIONS_FOLDER;
+        $this->paths['git_template']     = $this->paths['vendor_composter'] . self::GIT_TEMPLATE_FOLDER;
+        $this->paths['root_template']    = $this->paths['git_composter'] . self::GIT_TEMPLATE_FOLDER;
+        $this->paths['git_config']       = $this->paths['git_composter'] . self::CONFIG;
     }
 
 }
