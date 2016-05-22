@@ -24,14 +24,12 @@ namespace PHPComposter\PHPComposter;
 class Paths
 {
 
-    const ACTIONS_FOLDER      = 'actions/';
-    const BIN_FOLDER          = 'bin/';
+    //const ACTIONS_FOLDER      = 'actions/';
     const COMPOSTER_FOLDER    = 'php-composter/';
     const COMPOSTER_PATH      = 'vendor/php-composter/php-composter/';
     const CONFIG              = 'config.php';
-    const EXECUTABLE          = 'php-composter';
+    const EXECUTABLE          = 'general-hook';
     const GIT_FOLDER          = '.git/';
-    const GIT_TEMPLATE_FOLDER = 'includes/';
     const HOOKS_FOLDER        = 'hooks/';
 
     /**
@@ -99,10 +97,8 @@ class Paths
         $this->paths['root_hooks']       = $this->paths['root_git'] . self::HOOKS_FOLDER;
         $this->paths['vendor_composter'] = $this->paths['pwd'] . self::COMPOSTER_PATH;
         $this->paths['git_composter']    = $this->paths['root_git'] . self::COMPOSTER_FOLDER;
-        $this->paths['git_script']       = $this->paths['vendor_composter'] . self::BIN_FOLDER . self::EXECUTABLE;
-        $this->paths['actions']          = $this->paths['git_composter'] . self::ACTIONS_FOLDER;
-        $this->paths['git_template']     = $this->paths['vendor_composter'] . self::GIT_TEMPLATE_FOLDER;
-        $this->paths['root_template']    = $this->paths['git_composter'] . self::GIT_TEMPLATE_FOLDER;
+        $this->paths['git_script']       = $this->paths['vendor_composter'] . self::HOOKS_FOLDER . self::EXECUTABLE;
+        //$this->paths['actions']          = $this->paths['git_composter'] . self::ACTIONS_FOLDER;
         $this->paths['git_config']       = $this->paths['git_composter'] . self::CONFIG;
     }
 

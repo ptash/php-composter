@@ -161,7 +161,6 @@ class Plugin implements PluginInterface, EventSubscriberInterface
 
         $filesystem = new Filesystem();
         $this->cleanUp($filesystem);
-        $this->linkBootstrapFiles($filesystem);
         $this->createGitHooks($filesystem);
     }
 
@@ -200,43 +199,6 @@ class Plugin implements PluginInterface, EventSubscriberInterface
             ), true);
         }
         $filesystem->emptyDirectory($composterPath, true);
-
-        $composterTemplate = static::$paths->getPath('root_template');
-        if (static::$io->isVeryVerbose()) {
-            static::$io->write(sprintf(
-                _('Removing previous PHP Composter code at %1$s'),
-                $composterTemplate
-            ), true);
-        }
-        $filesystem->emptyDirectory($composterTemplate, true);
-    }
-
-    /**
-     * Symlink the bootstrapping code into the .git folder.
-     *
-     * @since 0.1.0
-     *
-     * @param Filesystem $filesystem Reference to the Filesystem instance.
-     */
-    protected function linkBootstrapFiles(Filesystem $filesystem)
-    {
-        $rootTemplate      = static::$paths->getPath('root_template');
-        $composterTemplate = static::$paths->getPath('git_template');
-
-        $files = array(
-            'bootstrap.php',
-        );
-
-        foreach ($files as $file) {
-            if (static::$io->isVeryVerbose()) {
-                static::$io->write(sprintf(
-                    _('Symlinking %1$s to %2$s'),
-                    $rootTemplate . $file,
-                    $composterTemplate . $file
-                ));
-            }
-            $filesystem->relativeSymlink($composterTemplate . $file, $rootTemplate . $file);
-        }
     }
 
     /**
