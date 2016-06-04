@@ -197,9 +197,9 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     {
         $extra = $composer->getPackage()->getExtra();
         if(!empty($extra['git-repository-root-path'])) {
-            return new Paths($extra['git-repository-root-path']);
+            return new Paths($composer, $extra['git-repository-root-path']);
         } else {
-            return new Paths(getcwd());
+            return new Paths($composer, getcwd());
         }
     }
 
@@ -220,6 +220,21 @@ class Plugin implements PluginInterface, EventSubscriberInterface
             ), true);
         }
         $filesystem->emptyDirectory($composterPath, true);
+    }
+
+    /**
+     * Create git hook php-script with correct path to vendor/autoload.php.
+     *
+     * @param $gitScriptPath path to template git hook
+     * @param $hookPath path to git hook file witch need to create
+     */
+    protected  function copyGitHookFile(Filesystem $filesystem, $gitScriptPath, $hookPath)
+    {
+        $vendorDir = static::$paths->getPath('vendor');
+        $relativePath = $filesystem->findShortestPath($hookPath, $vendorDir);
+
+        copy($gitScriptPath, $hookPath);
+        file_put_contents($hookPath, str_replace('vendor', $relativePath, file_get_contents($hookPath)));
     }
 
     /**
@@ -246,7 +261,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
                     $gitScriptPath
                 ));
             }
-            $filesystem->relativeSymlink($gitScriptPath, $hookPath);
+            $this->copyGitHookFile($filesystem, $gitScriptPath, $hookPath);
         }
     }
 }

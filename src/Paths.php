@@ -11,6 +11,8 @@
 
 namespace PHPComposter\PHPComposter;
 
+use Composer\Composer;
+
 /**
  * Class Paths.
  *
@@ -49,11 +51,21 @@ class Paths
     protected $paths = array();
 
     /**
+     * Instance of the Composer class
+     *
+     * @var Composer
+     *
+     * * @since 0.3.0
+     */
+    protected $composer;
+
+    /**
      * Paths constructor.
      *
+     * @param \Composer\Composer $composer
      * @param string $pathRoot path to root of package
      */
-    public function __construct($pathRoot = '')
+    public function __construct(Composer $composer, $pathRoot = '')
     {
         if (empty($pathRoot)) {
             $pathRoot = getcwd();
@@ -61,6 +73,7 @@ class Paths
             $pathRoot = getcwd() . DIRECTORY_SEPARATOR . $pathRoot;
         }
         $this->pathRoot = $pathRoot;
+        $this->composer = $composer;
     }
 
     /**
@@ -92,9 +105,13 @@ class Paths
      */
     protected function initPaths()
     {
+        /** @var \Composer\Config $config */
+        $config = $this->composer->getConfig();
+        $vendorDir = $config->get('vendor-dir');
         $this->paths['pwd']              = $this->pathRoot . DIRECTORY_SEPARATOR;
         $this->paths['root_git']         = $this->paths['pwd'] . self::GIT_FOLDER;
         $this->paths['root_hooks']       = $this->paths['root_git'] . self::HOOKS_FOLDER;
+        $this->paths['vendor']           = $vendorDir;
         $this->paths['vendor_composter'] = $this->paths['pwd'] . self::COMPOSTER_PATH;
         $this->paths['git_composter']    = $this->paths['root_git'] . self::COMPOSTER_FOLDER;
         $this->paths['git_script']       = $this->paths['vendor_composter'] . self::HOOKS_FOLDER . self::EXECUTABLE;
