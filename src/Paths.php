@@ -12,6 +12,8 @@
 namespace PHPComposter\PHPComposter;
 
 use Composer\Composer;
+use Composer\Package\PackageInterface;
+use Composer\Util\Filesystem;
 
 /**
  * Class Paths.
@@ -51,6 +53,15 @@ class Paths
     protected $paths = array();
 
     /**
+     * Instance of the Filesystem class
+     *
+     * @var Filesystem
+     *
+     * * @since 0.3.0
+     */
+    protected $filesystem;
+
+    /**
      * Instance of the Composer class
      *
      * @var Composer
@@ -74,6 +85,7 @@ class Paths
         }
         $this->pathRoot = $pathRoot;
         $this->composer = $composer;
+        $this->filesystem = new Filesystem();
     }
 
     /**
@@ -99,6 +111,53 @@ class Paths
     }
 
     /**
+     * Get package absolute install path
+     *
+     * @param $package
+     * @return string
+     */
+    protected function getPackageInstallPath($package)
+    {
+        $installPath = $this->composer->getInstallationManager()->getInstallPath($package);
+        if (!$this->filesystem->isAbsolutePath($installPath)) {
+            $installPath = getcwd() . DIRECTORY_SEPARATOR . $installPath;
+        }
+        return $installPath;
+    }
+
+    /**
+     * Get package path to hooks config file.
+     *
+     * @param PackageInterface $package
+     * @return string
+     */
+    public function getHookConfigPath(PackageInterface $package)
+    {
+        if ($this->composer->getPackage() === $package) {
+            return $this->getPath('git_config');
+        } else {
+            $installPath = $this->getPackageInstallPath($package);
+            return $installPath . DIRECTORY_SEPARATOR . self::GIT_FOLDER . self::HOOKS_FOLDER . self::CONFIG;
+        }
+    }
+
+    /**
+     * Get package path to git hooks directory.
+     *
+     * @param PackageInterface $package
+     * @return string
+     */
+    public function getHookPath(PackageInterface $package)
+    {
+        if ($this->composer->getPackage() === $package) {
+            return $this->getPath('root_hooks');
+        } else {
+            $installPath = $this->getPackageInstallPath($package);
+            return $installPath . DIRECTORY_SEPARATOR . self::GIT_FOLDER . self::HOOKS_FOLDER;
+        }
+    }
+
+    /**
      * Initialize the paths.
      *
      * @since 0.1.0
@@ -116,7 +175,7 @@ class Paths
         $this->paths['git_composter']    = $this->paths['root_git'] . self::COMPOSTER_FOLDER;
         $this->paths['git_script']       = $this->paths['vendor_composter'] . self::HOOKS_FOLDER . self::EXECUTABLE;
         //$this->paths['actions']          = $this->paths['git_composter'] . self::ACTIONS_FOLDER;
-        $this->paths['git_config']       = $this->paths['git_composter'] . self::CONFIG;
+        $this->paths['git_config']       = $this->paths['root_hooks'] . self::CONFIG;
     }
 
 }

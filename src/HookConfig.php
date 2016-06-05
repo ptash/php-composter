@@ -29,12 +29,13 @@ class HookConfig
      * @since 0.1.0
      *
      * @param string $hook     Name of the Git hook to add to.
+     * @param string $packageType Package type
      * @param int    $priority Optional. Priority of the hook. Defaults to 10.
      * @param string $method   Fully qualified method name to add.
      */
-    public static function addEntry($hook, $method, $priority = 10)
+    public static function addEntry($hook, $packageType, $method, $priority = 10)
     {
-        static::$config[$hook][$priority][] = $method;
+        static::$config[$hook][$priority][$packageType][] = $method;
     }
 
     /**

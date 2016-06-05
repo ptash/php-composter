@@ -18,6 +18,7 @@ use Composer\Plugin\PluginInterface;
 use Composer\Script\Event;
 use Composer\Script\ScriptEvents;
 use Composer\Util\Filesystem;
+use Composer\Package\PackageInterface;
 
 /**
  * Class Plugin.
@@ -69,6 +70,12 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     protected static $installer;
 
     /**
+     * Instance of the Plugin class
+     * @var Plugin
+     */
+    protected static $plugin;
+
+    /**
      * Get the event subscriber configuration for this plugin.
      *
      * @return array<string,string> The events to listen to, and their associated handlers.
@@ -90,22 +97,89 @@ class Plugin implements PluginInterface, EventSubscriberInterface
      */
     public static function persistConfig(Event $event)
     {
-        static::$installer->configurePackageHooks(static::$composer->getPackage());
-        
+        $composer = $event->getComposer();
+        static::$installer->configurePackageHooks($composer->getPackage());
+
+        static::$plugin->createPackageHook($composer, $composer->getPackage());
+
+        $packages = $composer->getRepositoryManager()->getLocalRepository()->getPackages();
+        foreach ($packages as $package)
+        {
+            /** @var PackageInterface $package */
+            static::$plugin->createPackageHook($composer, $package);
+        }
+    }
+
+    protected function createPackageHook(Composer $composer, PackageInterface $package)
+    {
         $filesystem = new Filesystem();
-        $path       = static::$paths->getPath('git_composter');
-        $filesystem->ensureDirectoryExists($path);
-        file_put_contents(static::$paths->getPath('git_config'), static::getConfig());
+        $this->cleanUp($filesystem, $package);
+        $this->createGitHooks($filesystem, $package);
+
+        $packageType = $this->getPackageType($composer, $package);
+        if (!empty($packageType))
+        {
+            $configPath = static::$paths->getHookConfigPath($package);
+            static::$io->write(
+                sprintf(_('Create hooks config for package "%1$s" in "%2$s"'), $package->getPrettyName(), $configPath),
+                true,
+                IOInterface::VERBOSE
+            );
+            file_put_contents($configPath, $this->getConfig($packageType));
+        }
+    }
+
+    /**
+     * Is package under git and need code checker.
+     *
+     * @param Composer $composer
+     * @param PackageInterface $package
+     * @return bool
+     */
+    protected function isPackageUnderGit(Composer $composer, PackageInterface $package)
+    {
+        if ($composer->getPackage() === $package) {
+            return true;
+        }
+        $installPath = $composer->getInstallationManager()->getInstallPath($package);
+        return is_dir($installPath . DIRECTORY_SEPARATOR. Paths::GIT_FOLDER);
+    }
+
+    /**
+     * Get package type.
+     *
+     * @param Composer $composer
+     * @param PackageInterface $package
+     * @return string package type. Value '' means that package not need code cheсker
+     */
+    protected function getPackageType(Composer $composer, PackageInterface $package)
+    {
+        $packageType = '';
+        $composerExtra = $composer->getPackage()->getExtra();
+        $extra = $package->getExtra();
+        if (static::isPackageUnderGit($composer, $package)) 
+        {
+            $packageType = Installer::PACKAGE_TYPE_DEFAULT;
+        }
+        if(!empty($extra['code-checker-type'])) {
+            $packageType = $extra['code-checker-type'];
+        }
+        $packageName = $package->getPrettyName();
+        if (isset($composerExtra['code-checker-types']) && !empty($composerExtra['code-checker-types'][$packageName]))
+        {
+            $packageType = $composerExtra['code-checker-types'][$packageName];
+        }
+        return $packageType;
     }
 
     /**
      * Generate the config file.
      *
      * @since 0.1.0
-     *
+     * @param string $packageType
      * @return string Generated Config file.
      */
-    public static function getConfig()
+    public function getConfig($packageType)
     {
         $output = '<?php' . PHP_EOL;
         $output .= '// PHP Composter configuration file.' . PHP_EOL;
@@ -114,11 +188,12 @@ class Plugin implements PluginInterface, EventSubscriberInterface
         $output .= PHP_EOL;
         $output .= 'return array(' . PHP_EOL;
 
-        foreach (static::getGitHookNames() as $hook) {
+        foreach ($this->getGitHookNames() as $hook) {
             $entries = HookConfig::getEntries($hook);
             $output .= '    \'' . $hook . '\' => array(' . PHP_EOL;
-            foreach ($entries as $priority => $methods) {
+            foreach ($entries as $priority => $methodsByType) {
                 $output .= '        ' . $priority . ' => array(' . PHP_EOL;
+                $methods = isset($methodsByType[$packageType]) ? $methodsByType[$packageType] : array();
                 foreach ($methods as $method) {
                     $output .= '            \'' . $method . '\',' . PHP_EOL;
                 }
@@ -139,7 +214,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
      *
      * @return array Array of strings.
      */
-    protected static function getGitHookNames()
+    protected function getGitHookNames()
     {
         return array(
             'applypatch-msg',
@@ -169,6 +244,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
      */
     public function activate(Composer $composer, IOInterface $io)
     {
+        static::$plugin = $this;
         static::$composer = $composer;
         static::$io = $io;
         if (static::$io->isVerbose()) {
@@ -179,10 +255,6 @@ class Plugin implements PluginInterface, EventSubscriberInterface
 
         static::$installer = new Installer(static::$io, $composer, 'library', null, null, static::$paths);
         $composer->getInstallationManager()->addInstaller(static::$installer);
-
-        $filesystem = new Filesystem();
-        $this->cleanUp($filesystem);
-        $this->createGitHooks($filesystem);
     }
 
     /**
@@ -209,17 +281,17 @@ class Plugin implements PluginInterface, EventSubscriberInterface
      * @since 0.1.0
      *
      * @param Filesystem $filesystem Reference to the Filesystem instance.
+     * @param PackageInterface $package
      */
-    protected function cleanUp(Filesystem $filesystem)
+    protected function cleanUp(Filesystem $filesystem, PackageInterface $package)
     {
-        $composterPath = static::$paths->getPath('git_composter');
-        if (static::$io->isVeryVerbose()) {
-            static::$io->write(sprintf(
-                _('Removing previous PHP Composter actions at %1$s'),
-                $composterPath
-            ), true);
-        }
-        $filesystem->emptyDirectory($composterPath, true);
+        $hooksPath     = static::$paths->getHookPath($package);
+        static::$io->write(
+            sprintf(_('Removing previous PHP Composter actions at %1$s'), $hooksPath),
+            true,
+            IOInterface::VERBOSE
+        );
+        $filesystem->emptyDirectory($hooksPath, false);
     }
 
     /**
@@ -243,11 +315,12 @@ class Plugin implements PluginInterface, EventSubscriberInterface
      * @since 0.1.0
      *
      * @param Filesystem $filesystem Reference to the Filesystem instance.
+     * @param PackageInterface $package
      */
-    protected function createGitHooks(Filesystem $filesystem)
+    protected function createGitHooks(Filesystem $filesystem, PackageInterface $package)
     {
 
-        $hooksPath     = static::$paths->getPath('root_hooks');
+        $hooksPath     = static::$paths->getHookPath($package);
         $gitScriptPath = static::$paths->getPath('git_script');
 
         $filesystem->ensureDirectoryExists($hooksPath);
@@ -256,7 +329,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
             $hookPath = $hooksPath . $githook;
             if (static::$io->isDebug()) {
                 static::$io->write(sprintf(
-                    _('Symlinking %1$s to %2$s'),
+                    _('Copy %1$s to %2$s'),
                     $hookPath,
                     $gitScriptPath
                 ));

@@ -36,6 +36,7 @@ class Installer extends LibraryInstaller
     const EXTRA_KEY = 'php-composter-hooks';
     const PREFIX    = 'php-composter-';
     const TYPE      = 'php-composter-action';
+    const PACKAGE_TYPE_DEFAULT = 'default';
 
     /** @var Paths Reference to the Paths instance */
     protected $paths;
@@ -89,7 +90,7 @@ class Installer extends LibraryInstaller
      */
     public function install(InstalledRepositoryInterface $repo, PackageInterface $package)
     {
-        echo 'Install package ' . $package->getPrettyName();
+        $this->io->write(sprintf(_('Install package "%1$s"'), $package->getPrettyName()), true, IOInterface::VERBOSE);
         /*
         $path = $this->getInstallPath($package);
         if ($this->io->isVerbose()) {
@@ -111,9 +112,9 @@ class Installer extends LibraryInstaller
      */
     public function configurePackageHooks(PackageInterface $package)
     {
-        echo 'Install package ' . $package->getPrettyName();
+        $this->io->write(sprintf(_('Configure package "%1$s"'), $package->getPrettyName()), true, IOInterface::VERBOSE);
 
-        foreach ($this->getHooks($package) as $prioritizedHook => $method) {
+        foreach ($this->getHooks($package) as $prioritizedHook => $methods) {
             $array = explode('.', $prioritizedHook);
             if (count($array) > 1) {
                 list($priority, $hook) = $array;
@@ -122,15 +123,21 @@ class Installer extends LibraryInstaller
                 $priority = 10;
             }
 
-            if ($this->io->isVeryVerbose()) {
-                $this->io->write(sprintf(
-                    _('Adding method "%1$s" to hook "%2$s" with priority %3$s'),
-                    $method,
-                    $hook,
-                    $priority
-                ), true);
+            if (!is_array($methods)) {
+                $methods = array(Installer::PACKAGE_TYPE_DEFAULT => $methods);
             }
-            HookConfig::addEntry($hook, $method, $priority);
+            foreach($methods as $packageType => $method) {
+                if ($this->io->isVeryVerbose()) {
+                    $this->io->write(sprintf(
+                        _('Adding method "%1$s" to hook "%2$s" with priority %3$s for package typr %4$s'),
+                        $method,
+                        $hook,
+                        $priority,
+                        $packageType
+                    ), true);
+                }
+                HookConfig::addEntry($hook, $packageType, $method, $priority);
+            }
         }
     }
 
