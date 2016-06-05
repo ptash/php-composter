@@ -110,6 +110,12 @@ class Plugin implements PluginInterface, EventSubscriberInterface
         }
     }
 
+    /**
+     * Create git hooks for package.
+     *
+     * @param Composer $composer
+     * @param PackageInterface $package
+     */
     protected function createPackageHook(Composer $composer, PackageInterface $package)
     {
         $filesystem = new Filesystem();
@@ -121,7 +127,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
         {
             $configPath = static::$paths->getHookConfigPath($package);
             static::$io->write(
-                sprintf(_('Create hooks config for package "%1$s" in "%2$s"'), $package->getPrettyName(), $configPath),
+                sprintf(_('Create hooks config for package "%1$s" type %2$s in "%3$s"'), $package->getPrettyName(), $packageType, $configPath),
                 true,
                 IOInterface::VERBOSE
             );
@@ -192,8 +198,15 @@ class Plugin implements PluginInterface, EventSubscriberInterface
             $entries = HookConfig::getEntries($hook);
             $output .= '    \'' . $hook . '\' => array(' . PHP_EOL;
             foreach ($entries as $priority => $methodsByType) {
-                $output .= '        ' . $priority . ' => array(' . PHP_EOL;
-                $methods = isset($methodsByType[$packageType]) ? $methodsByType[$packageType] : array();
+                $output .= '        \'' . $priority . '\' => array(' . PHP_EOL;
+                
+                $methods = array();
+                if (isset($methodsByType[$packageType])) {
+                    $methods = $methodsByType[$packageType];
+                } else if (isset($methodsByType[Installer::PACKAGE_TYPE_DEFAULT])) {
+                    $methods = $methodsByType[Installer::PACKAGE_TYPE_DEFAULT];
+                }
+
                 foreach ($methods as $method) {
                     $output .= '            \'' . $method . '\',' . PHP_EOL;
                 }
@@ -307,6 +320,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
 
         copy($gitScriptPath, $hookPath);
         file_put_contents($hookPath, str_replace('vendor', $relativePath, file_get_contents($hookPath)));
+        chmod($hookPath, 0755);
     }
 
     /**

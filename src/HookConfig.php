@@ -35,7 +35,11 @@ class HookConfig
      */
     public static function addEntry($hook, $packageType, $method, $priority = 10)
     {
+        $sort = !isset(static::$config[$hook][$priority]);
         static::$config[$hook][$priority][$packageType][] = $method;
+        if ($sort) {
+            ksort(static::$config[$hook]);
+        }
     }
 
     /**
