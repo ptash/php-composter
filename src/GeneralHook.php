@@ -20,8 +20,8 @@ class GeneralHook {
         $root = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..';
 
         // Read the configuration file.
-        $path = new Paths();
-        $config = include $path->getPath('git_config');
+        $configPath = Paths::getHookConfigPathForInclude();
+        $config = include $configPath;
 
         $this->runHooks($hookName, $root, $config);
     }

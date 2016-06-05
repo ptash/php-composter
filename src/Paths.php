@@ -158,6 +158,16 @@ class Paths
     }
 
     /**
+     * Get path to hooks config to include in hook script
+     *
+     * @return string
+     */
+    public static function getHookConfigPathForInclude()
+    {
+        return getcwd() . DIRECTORY_SEPARATOR . self::GIT_FOLDER . self::HOOKS_FOLDER . self::CONFIG;
+    }
+
+    /**
      * Initialize the paths.
      *
      * @since 0.1.0
