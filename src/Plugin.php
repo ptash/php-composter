@@ -118,16 +118,19 @@ class Plugin implements PluginInterface, EventSubscriberInterface
      */
     protected function createPackageHook(Composer $composer, PackageInterface $package)
     {
-        $filesystem = new Filesystem();
-        $this->cleanUp($filesystem, $package);
-        $this->createGitHooks($filesystem, $package);
+        if ($this->isPackageUnderGit($composer, $package)) {
+            $filesystem = new Filesystem();
+            $this->cleanUp($filesystem, $package);
+        }
 
         $packageType = $this->getPackageType($composer, $package);
         if (!empty($packageType))
         {
+            $this->createGitHooks($filesystem, $package);
+
             $configPath = static::$paths->getHookConfigPath($package);
             static::$io->write(
-                sprintf(_('Create hooks config for package "%1$s" type %2$s in "%3$s"'), $package->getPrettyName(), $packageType, $configPath),
+                sprintf(_('Create hooks config for package "%1$s" type %2$s'), $package->getPrettyName(), $packageType),
                 true,
                 IOInterface::VERBOSE
             );
@@ -148,7 +151,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
             return true;
         }
         $installPath = $composer->getInstallationManager()->getInstallPath($package);
-        return is_dir($installPath . DIRECTORY_SEPARATOR. Paths::GIT_FOLDER);
+        return is_file($installPath . DIRECTORY_SEPARATOR. Paths::GIT_FOLDER . 'config');
     }
 
     /**
@@ -167,11 +170,11 @@ class Plugin implements PluginInterface, EventSubscriberInterface
         {
             $packageType = Installer::PACKAGE_TYPE_DEFAULT;
         }
-        if(!empty($extra['code-checker-type'])) {
+        if(isset($extra['code-checker-type'])) {
             $packageType = $extra['code-checker-type'];
         }
         $packageName = $package->getPrettyName();
-        if (isset($composerExtra['code-checker-types']) && !empty($composerExtra['code-checker-types'][$packageName]))
+        if (isset($composerExtra['code-checker-types']) && isset($composerExtra['code-checker-types'][$packageName]))
         {
             $packageType = $composerExtra['code-checker-types'][$packageName];
         }
@@ -299,12 +302,14 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     protected function cleanUp(Filesystem $filesystem, PackageInterface $package)
     {
         $hooksPath     = static::$paths->getHookPath($package);
-        static::$io->write(
-            sprintf(_('Removing previous PHP Composter actions at %1$s'), $hooksPath),
-            true,
-            IOInterface::VERBOSE
-        );
-        $filesystem->emptyDirectory($hooksPath, false);
+        if (is_dir($hooksPath) && !$filesystem->isDirEmpty($hooksPath)) {
+            static::$io->write(
+                sprintf(_('Removing previous PHP Composter actions for package %1$s'), $package->getPrettyName()),
+                true,
+                IOInterface::VERBOSE
+            );
+            $filesystem->emptyDirectory($hooksPath, false);
+        }
     }
 
     /**
