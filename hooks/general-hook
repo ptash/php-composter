@@ -1,8 +1,8 @@
 #!/usr/bin/env php
 <?php
 
-require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/${VENDOR_DIR}/autoload.php';
 
 use PHPComposter\PHPComposter\GeneralHook;
 $generalHook = new GeneralHook($argv);
-$generalHook->run($argv);
+$generalHook->run($argv, __DIR__ . '/${VENDOR_DIR}');

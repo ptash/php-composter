@@ -324,7 +324,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
         $relativePath = $filesystem->findShortestPath($hookPath, $vendorDir);
 
         copy($gitScriptPath, $hookPath);
-        file_put_contents($hookPath, str_replace('vendor', $relativePath, file_get_contents($hookPath)));
+        file_put_contents($hookPath, str_replace('${VENDOR_DIR}', $relativePath, file_get_contents($hookPath)));
         chmod($hookPath, 0755);
     }
 

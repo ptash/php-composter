@@ -14,7 +14,7 @@ class GeneralHook {
      *
      * @param array $argv arguments from command line which run hook
      */
-    public function run($argv)
+    public function run($argv, $vendorDir)
     {
         $hookName = basename($argv[0]);
         $root = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..';
@@ -23,7 +23,7 @@ class GeneralHook {
         $configPath = Paths::getHookConfigPathForInclude();
         $config = include $configPath;
 
-        $this->runHooks($hookName, $root, $config);
+        $this->runHooks($hookName, $root, $config, $vendorDir);
     }
 
     /**
@@ -34,7 +34,7 @@ class GeneralHook {
      * @param $config
      * @throws RuntimeException
      */
-    public function runHooks($hookName, $root, $config)
+    public function runHooks($hookName, $root, $config, $vendorDir)
     {
         // Iterate over hookName methods.
         if (array_key_exists($hookName, $config)) {
@@ -61,7 +61,7 @@ class GeneralHook {
                     list($class, $method) = $array;
 
                     // Instantiate a new action object and call its method.
-                    $object = new $class($hookName, $root);
+                    $object = new $class($hookName, $root, $vendorDir);
                     $object->init();
                     $object->$method();
                     $object->shutdown();
