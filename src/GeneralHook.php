@@ -36,6 +36,8 @@ class GeneralHook {
      */
     public function runHooks($hookName, $root, $config, $vendorDir)
     {
+        $exitCode = 0;
+        $hookCount = 0;
         // Iterate over hookName methods.
         if (array_key_exists($hookName, $config)) {
 
@@ -60,14 +62,26 @@ class GeneralHook {
                     }
                     list($class, $method) = $array;
 
+                    $hookCount++;
+
                     // Instantiate a new action object and call its method.
                     $object = new $class($hookName, $root, $vendorDir);
                     $object->init();
-                    $object->$method();
+                    $exitCodeMethod = $object->$method();
+                    if ($exitCodeMethod > 0) {
+                        $exitCode = $exitCodeMethod;
+                    }
                     $object->shutdown();
                     unset($object);
                 }
             }
         }
+        if ($exitCode > 255) {
+            $exitCode = 255;
+        }
+        if (0 === $exitCode && $hookCount > 0) {
+            echo "\n$hookName hook pass!\nGood job cotton!\n\n";
+        }
+        exit($exitCode);
     }
 }
